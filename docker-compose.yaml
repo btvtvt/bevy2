@@ -1,0 +1,10 @@
+services:
+  bevy_server:
+    container_name: bevy_server
+    # image: bevy_server
+    stop_grace_period: 4s
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    ports:
+      - "5000:5000/udp"

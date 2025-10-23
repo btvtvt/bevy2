@@ -1,4 +1,4 @@
-#[cfg(not(target_arch = "wasm32"))]
+// #[cfg(not(target_arch = "wasm32"))]
 pub mod demo_fetch_api;
 
 #[cfg(not(target_arch = "wasm32"))]

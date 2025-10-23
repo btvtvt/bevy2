@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy_server_client::demo_my_plugin::my_plugin;
+use bevy_server_client::{demo_fetch_api::fetch_api_plugin, demo_my_plugin::my_plugin};
 
 #[derive(Resource)]
 struct GreetTimer(Timer);
@@ -35,8 +35,8 @@ fn main() {
 
     // CUSTOM PLUGINS
     app.add_plugins(my_plugin::MyPlugin);
+    app.add_plugins(fetch_api_plugin::FetchAPIPlugin);
     // app.add_plugins(HeavyComputePlugin);
-    // app.add_plugins(FetchAPIPlugin);
 
     app.run();
 }

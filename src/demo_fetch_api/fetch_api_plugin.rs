@@ -1,11 +1,9 @@
-use bevy::app::{App, Plugin, Startup, Update};
-use bevy::log::info;
-use bevy::prelude::{Commands, Message, MessageReader, MessageWriter, Res, ResMut, Resource};
+use bevy::prelude::*;
 use bevy::tasks::AsyncComputeTaskPool;
-use reqwest::StatusCode;
-use std::io::Read;
-use std::sync::Mutex;
-use std::time::Duration;
+// use reqwest::StatusCode;
+// use std::io::Read;
+// use std::sync::Mutex;
+// use std::time::Duration;
 
 pub struct FetchAPIPlugin;
 
@@ -19,7 +17,7 @@ struct FetchAPIMessage {
 
 #[derive(Resource)]
 struct FetchAPIState {
-    client: reqwest::blocking::Client,
+    client: reqwest::Client,
     // fetch_result: String,
     tx: async_std::channel::Sender<FetchAPIMessage>,
     rv: async_std::channel::Receiver<FetchAPIMessage>,
@@ -27,7 +25,7 @@ struct FetchAPIState {
 
 impl Plugin for FetchAPIPlugin {
     fn build(&self, app: &mut App) {
-        let client = reqwest::blocking::Client::new();
+        let client = reqwest::Client::new();
 
         let (tx, rv) = async_std::channel::bounded::<FetchAPIMessage>(1);
 
@@ -61,37 +59,40 @@ fn fetch_api_setup(_commands: Commands, state: Res<FetchAPIState>) {
             let res = client
                 .post("https://httpbin.org/post")
                 .body("Hello from Rust + Bevy + Reqwest!")
-                .send();
+                .send()
+                .await;
 
             info!("FetchAPIPlugin: fetch done");
 
             if let Ok(res) = res {
-                // info!("FetchAPIPlugin: fetch result: {:#?}", res);
+                info!("FetchAPIPlugin: fetch result: \n {:#?}", res);
 
-                let headers = res.headers().to_owned();
+                let resp_status = res.status();
+                let resp_headers = res.headers().to_owned();
+                let resp_text = res.text().await.unwrap();
 
                 tx.send(FetchAPIMessage {
-                    status: res.status(),
-                    headers,
-                    body: res.text().unwrap(),
+                    status: resp_status,
+                    headers: resp_headers,
+                    body: resp_text,
                 })
                 .await
                 .unwrap();
-            } else {
-                // info!("FetchAPIPlugin: fetch result error: {:#?}", res);
+            } else if let Err(err) = res {
+                info!("FetchAPIPlugin: fetch result error: {:#?}", err);
             }
         })
         .detach();
 }
 
-fn rv_fetch(state: ResMut<FetchAPIState>, mut writer: MessageWriter<FetchAPIMessage>) {
+fn rv_fetch(state: ResMut<FetchAPIState>, mut fetch_api_writer: MessageWriter<FetchAPIMessage>) {
     while let Ok(v) = state.rv.try_recv() {
-        writer.write(v);
+        fetch_api_writer.write(v);
     }
 }
 
-fn fetch_check_message(mut messages: MessageReader<FetchAPIMessage>) {
-    for message in messages.read() {
-        info!("FetchAPIPlugin: fetch_check_message got = {:#?}", message);
+fn fetch_check_message(mut fetch_api_messages: MessageReader<FetchAPIMessage>) {
+    for message in fetch_api_messages.read() {
+        info!("FetchAPIPlugin: fetch_check_message = \n{:#?}", message);
     }
 }

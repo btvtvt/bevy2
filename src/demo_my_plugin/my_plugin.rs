@@ -17,7 +17,7 @@ impl Plugin for MyPlugin {
     }
 }
 
-fn my_plugin_setup(mut commands: Commands) {
+fn my_plugin_setup(mut _commands: Commands) {
     info!("my_plugin_setup Startup");
 }
 

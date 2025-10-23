@@ -1,5 +1,9 @@
+#[cfg(not(target_arch = "wasm32"))]
 pub mod demo_fetch_api;
+
+#[cfg(not(target_arch = "wasm32"))]
 pub mod demo_heavy_compute;
+
 pub mod demo_my_plugin;
 
 use std::time::Duration;
